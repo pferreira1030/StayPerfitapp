@@ -714,6 +714,7 @@ tbody td { padding:10px 11px; font-size:13px; border-bottom:1px solid rgba(255,2
 
 .panel { animation:fadeIn .2s ease; }
 @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
 
 /* PAYMENT INLINE EDIT */
 .payment-select-inline {
@@ -2243,6 +2244,27 @@ async function checkSession() {
       unsubscribe(); // Ouvir apenas uma vez
       if (!fbUser) { resolve(false); return; }
       try {
+        // Tentativa rápida via cache local (evita ir ao Firestore)
+        const cached = getDBSync();
+        const cachedUser = cached?.users?.find(u => u.email === fbUser.email);
+        if (cachedUser) {
+          if (cachedUser.role === 'client') {
+            const cd = cached.clientsData?.[cachedUser.id];
+            if (cd?.perfil?.pagamento === 'em_falta') {
+              window._fbSignOut();
+              resolve(false); return;
+            }
+          }
+          currentUser = cachedUser;
+          resolve(true);
+          // Em background, atualizar com dados frescos do Firestore
+          getDB().then(db => {
+            const freshUser = db.users.find(u => u.email === fbUser.email);
+            if (freshUser) currentUser = freshUser;
+          }).catch(() => {});
+          return;
+        }
+        // Sem cache — ir ao Firestore
         const db = await getDB();
         const user = db.users.find(u => u.email === fbUser.email);
         if (!user) { resolve(false); return; }
@@ -4881,6 +4903,31 @@ function openLightbox(src) {
   modal.style.display = 'flex';
 }
 
+// Comprime uma imagem para base64 com dimensão e qualidade reduzidas
+function compressImageToBase64(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = ev => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function handleQPhotos(input) {
   const preview = document.getElementById('q-photos-preview');
   if (!preview) return;
@@ -4894,27 +4941,24 @@ function handleQPhotos(input) {
 
   let loaded = 0;
   files.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      window._qPhotos.push(e.target.result);
+    // Comprimir para max 800px e qualidade 0.65 (~30-80KB por foto)
+    compressImageToBase64(file, 800, 0.65).then(compressed => {
+      window._qPhotos.push(compressed);
       const img = document.createElement('div');
       img.style.cssText = 'position:relative;';
-      img.innerHTML = `<img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--border);">
+      img.innerHTML = `<img src="${compressed}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--border);">
         <button onclick="removeQPhoto(this,${window._qPhotos.length-1})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);border:none;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>`;
       preview.appendChild(img);
       loaded++;
       if (loaded === files.length) {
-        // All photos loaded — re-enable submit
         if (btn) { btn.disabled = false; btn.textContent = '✅ Submeter Check-in'; }
       }
-    };
-    reader.onerror = () => {
+    }).catch(() => {
       loaded++;
       if (loaded === files.length) {
         if (btn) { btn.disabled = false; btn.textContent = '✅ Submeter Check-in'; }
       }
-    };
-    reader.readAsDataURL(file);
+    });
   });
 }
 function removeQPhoto(btn, idx) {
@@ -5096,6 +5140,18 @@ async function initApp() {
   // Mostrar loading enquanto liga ao Firebase
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-screen').style.display = 'none';
+
+  // Mostrar indicador de carregamento de sessão
+  const loginBox = document.querySelector('.login-box');
+  let sessionLoader = document.getElementById('session-loader');
+  if (!sessionLoader && loginBox) {
+    sessionLoader = document.createElement('div');
+    sessionLoader.id = 'session-loader';
+    sessionLoader.style.cssText = 'text-align:center;padding:20px 0 8px;color:var(--muted);font-size:13px;';
+    sessionLoader.innerHTML = '<span style="animation:spin 1s linear infinite;display:inline-block;margin-right:6px;">⏳</span> A verificar sessão...';
+    loginBox.insertBefore(sessionLoader, loginBox.firstChild);
+  }
+  if (sessionLoader) sessionLoader.style.display = 'block';
   
   // Aguardar Firebase ficar pronto (máx 5s)
   await new Promise(resolve => {
@@ -5106,6 +5162,10 @@ async function initApp() {
 
   refreshALIMENTOS();
   const loggedIn = await checkSession();
+
+  // Esconder indicador de sessão
+  if (sessionLoader) sessionLoader.style.display = 'none';
+
   if (!loggedIn) {
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app-screen').style.display = 'none';

@@ -1064,6 +1064,9 @@ tbody td { padding:10px 11px; font-size:13px; border-bottom:1px solid rgba(255,2
         <button class="nav-item" onclick="showPanel('conversora',this)">
           <span class="icon">🔄</span> Conversora
         </button>
+        <button class="nav-item" onclick="showPanel('receitas',this)">
+          <span class="icon">📄</span> Receitas
+        </button>
       </div>
       <div class="nav-section">
         <div class="nav-label">Check-ins</div>
@@ -1894,6 +1897,89 @@ tbody td { padding:10px 11px; font-size:13px; border-bottom:1px solid rgba(255,2
         </div>
       </div>
 
+      <!-- ===== RECEITAS ===== -->
+      <div class="panel" id="panel-receitas">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="section-title" style="margin-bottom:0;">📄 Receitas</div>
+          <button class="btn btn-accent btn-sm admin-only" onclick="openModal('modal-add-receita')" style="display:none;">+ Adicionar Receita</button>
+        </div>
+
+        <!-- Filtro por categoria -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="receitas-filtros">
+          <button class="btn btn-ghost btn-sm" onclick="filtrarReceitas('todas',this)" style="border:1px solid var(--accent);color:var(--accent);">Todas</button>
+          <button class="btn btn-ghost btn-sm" onclick="filtrarReceitas('pequeno-almoco',this)">☀️ Pequeno-Almoço</button>
+          <button class="btn btn-ghost btn-sm" onclick="filtrarReceitas('almoco',this)">🍽️ Almoço</button>
+          <button class="btn btn-ghost btn-sm" onclick="filtrarReceitas('jantar',this)">🌙 Jantar</button>
+          <button class="btn btn-ghost btn-sm" onclick="filtrarReceitas('snack',this)">🥜 Snack</button>
+          <button class="btn btn-ghost btn-sm" onclick="filtrarReceitas('sobremesa',this)">🍓 Sobremesa</button>
+          <button class="btn btn-ghost btn-sm" onclick="filtrarReceitas('outro',this)">📁 Outro</button>
+        </div>
+
+        <!-- Grid de receitas -->
+        <div id="receitas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;"></div>
+        <div id="receitas-empty" style="display:none;text-align:center;padding:40px;color:var(--muted);">
+          <div style="font-size:48px;margin-bottom:12px;">📄</div>
+          <div style="font-size:15px;">Nenhuma receita disponível.</div>
+          <div style="font-size:13px;margin-top:6px;" class="admin-only">Clica em <strong>+ Adicionar Receita</strong> para começar.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD RECEITA -->
+<div class="modal-overlay" id="modal-add-receita">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-close" onclick="closeModal('modal-add-receita')">✕</button>
+    <div class="modal-title">📄 Adicionar Receita</div>
+    <div class="form-row cols-2">
+      <div><label>Nome da Receita</label><input type="text" id="rec-nome" placeholder="Ex: Panquecas de Aveia"></div>
+      <div>
+        <label>Categoria</label>
+        <select id="rec-categoria">
+          <option value="pequeno-almoco">☀️ Pequeno-Almoço</option>
+          <option value="almoco">🍽️ Almoço</option>
+          <option value="jantar">🌙 Jantar</option>
+          <option value="snack">🥜 Snack</option>
+          <option value="sobremesa">🍓 Sobremesa</option>
+          <option value="outro">📁 Outro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div><label>Descrição (opcional)</label><input type="text" id="rec-descricao" placeholder="Ex: Rica em proteína, ideal pós-treino"></div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label>Ficheiro PDF da Receita</label>
+        <div id="rec-upload-area" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;" onclick="document.getElementById('rec-pdf-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="handleReceitaDrop(event)">
+          <div style="font-size:32px;margin-bottom:6px;">📂</div>
+          <div style="font-size:13px;color:var(--muted);">Clica ou arrasta o PDF aqui</div>
+          <div id="rec-file-name" style="font-size:12px;color:var(--accent);margin-top:8px;display:none;"></div>
+        </div>
+        <input type="file" id="rec-pdf-input" accept="application/pdf" style="display:none;" onchange="handleReceitaFile(this)">
+      </div>
+    </div>
+    <div style="display:flex;gap:9px;margin-top:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-receita');resetReceitaModal()">Cancelar</button>
+      <button class="btn btn-accent" onclick="addReceita()">✅ Guardar Receita</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VIEW RECEITA (PDF viewer) -->
+<div class="modal-overlay" id="modal-view-receita" onclick="if(event.target===this)closeModal('modal-view-receita')">
+  <div class="modal" style="max-width:820px;width:95vw;padding:0;overflow:hidden;border-radius:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface2);border-bottom:1px solid var(--border);">
+      <div style="font-weight:700;font-size:15px;" id="view-receita-title">Receita</div>
+      <div style="display:flex;gap:8px;">
+        <a id="view-receita-download" href="#" download style="font-size:13px;" class="btn btn-ghost btn-sm">⬇️ Download</a>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-view-receita')">✕ Fechar</button>
+      </div>
+    </div>
+    <div style="height:75vh;overflow:auto;background:#1a1a1a;">
+      <iframe id="view-receita-iframe" style="width:100%;height:100%;border:none;" src=""></iframe>
     </div>
   </div>
 </div>
@@ -4821,8 +4907,160 @@ function removeFoodItem(type,meal,idx) {
 function filterFoods() { renderAlimentosTable(); }
 
 // ============================================================
-// CONVERSORA
+// RECEITAS
 // ============================================================
+let _receitaFiltroAtivo = 'todas';
+let _receitaPdfData = null; // base64 PDF pendente para adicionar
+
+function renderReceitas(filtro) {
+  if (filtro !== undefined) _receitaFiltroAtivo = filtro;
+  const db = getDBSync();
+  const receitas = (db.receitas || []).filter(r =>
+    _receitaFiltroAtivo === 'todas' || r.categoria === _receitaFiltroAtivo
+  );
+  const grid = document.getElementById('receitas-grid');
+  const empty = document.getElementById('receitas-empty');
+  if (!grid) return;
+
+  const isAdmin = currentUser && currentUser.role === 'admin';
+
+  if (!receitas.length) {
+    grid.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  const catLabels = {
+    'pequeno-almoco': '☀️ Pequeno-Almoço',
+    'almoco': '🍽️ Almoço',
+    'jantar': '🌙 Jantar',
+    'snack': '🥜 Snack',
+    'sobremesa': '🍓 Sobremesa',
+    'outro': '📁 Outro'
+  };
+
+  grid.innerHTML = receitas.map(r => `
+    <div class="card" style="display:flex;flex-direction:column;gap:10px;cursor:default;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:3px;">${r.nome}</div>
+          <span style="font-size:11px;background:rgba(200,241,53,.15);color:var(--accent);padding:2px 8px;border-radius:20px;">${catLabels[r.categoria]||r.categoria}</span>
+        </div>
+        ${isAdmin ? `<button class="btn btn-ghost btn-sm" onclick="deleteReceita('${r.id}')" style="color:var(--danger,#ff4444);flex-shrink:0;" title="Eliminar">🗑️</button>` : ''}
+      </div>
+      ${r.descricao ? `<div style="font-size:12px;color:var(--muted);">${r.descricao}</div>` : ''}
+      <div style="font-size:11px;color:var(--muted);">📅 ${r.data || ''}</div>
+      <div style="display:flex;gap:8px;margin-top:auto;">
+        ${r.pdfBase64 ? `
+          <button class="btn btn-accent btn-sm" style="flex:1;" onclick="viewReceita('${r.id}')">👁️ Ver PDF</button>
+          <a class="btn btn-ghost btn-sm" href="${r.pdfBase64}" download="${r.nome.replace(/[^a-zA-Z0-9]/g,'_')}.pdf" style="flex:1;text-align:center;text-decoration:none;">⬇️ Download</a>
+        ` : `<div style="font-size:12px;color:var(--muted);font-style:italic;">Sem PDF anexado</div>`}
+      </div>
+    </div>
+  `).join('');
+}
+
+function filtrarReceitas(cat, btn) {
+  _receitaFiltroAtivo = cat;
+  document.querySelectorAll('#receitas-filtros .btn').forEach(b => {
+    b.style.border = '';
+    b.style.color = '';
+  });
+  if (btn) { btn.style.border = '1px solid var(--accent)'; btn.style.color = 'var(--accent)'; }
+  renderReceitas();
+}
+
+function viewReceita(id) {
+  const db = getDBSync();
+  const r = (db.receitas||[]).find(x => x.id === id);
+  if (!r || !r.pdfBase64) return;
+  document.getElementById('view-receita-title').textContent = r.nome;
+  const dl = document.getElementById('view-receita-download');
+  dl.href = r.pdfBase64;
+  dl.download = (r.nome.replace(/[^a-zA-Z0-9]/g,'_') || 'receita') + '.pdf';
+  document.getElementById('view-receita-iframe').src = r.pdfBase64;
+  openModal('modal-view-receita');
+}
+
+function deleteReceita(id) {
+  if (!confirm('Eliminar esta receita?')) return;
+  const db = getDBSync();
+  db.receitas = (db.receitas||[]).filter(r => r.id !== id);
+  saveDB(db);
+  renderReceitas();
+  showToast('🗑️ Receita eliminada.');
+}
+
+function handleReceitaFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.type !== 'application/pdf') { showToast('⚠️ Só são aceites ficheiros PDF.', true); return; }
+  if (file.size > 10 * 1024 * 1024) { showToast('⚠️ PDF demasiado grande (máx 10 MB).', true); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    _receitaPdfData = e.target.result; // data:application/pdf;base64,...
+    const nameEl = document.getElementById('rec-file-name');
+    nameEl.textContent = '✅ ' + file.name;
+    nameEl.style.display = 'block';
+    document.getElementById('rec-upload-area').style.borderColor = 'var(--accent)';
+    // Auto-fill name if empty
+    const nomeInput = document.getElementById('rec-nome');
+    if (!nomeInput.value.trim()) {
+      nomeInput.value = file.name.replace(/\.pdf$/i,'').replace(/[_-]/g,' ');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleReceitaDrop(event) {
+  event.preventDefault();
+  document.getElementById('rec-upload-area').style.borderColor = 'var(--border)';
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  // Simulate input change
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  const inp = document.getElementById('rec-pdf-input');
+  inp.files = dt.files;
+  handleReceitaFile(inp);
+}
+
+function addReceita() {
+  const nome = document.getElementById('rec-nome').value.trim();
+  const categoria = document.getElementById('rec-categoria').value;
+  const descricao = document.getElementById('rec-descricao').value.trim();
+
+  if (!nome) { showToast('⚠️ Insere um nome para a receita.', true); return; }
+
+  const db = getDBSync();
+  if (!db.receitas) db.receitas = [];
+  db.receitas.push({
+    id: 'rec-' + Date.now(),
+    nome,
+    categoria,
+    descricao,
+    data: new Date().toLocaleDateString('pt-PT'),
+    pdfBase64: _receitaPdfData || null
+  });
+  saveDB(db);
+  closeModal('modal-add-receita');
+  resetReceitaModal();
+  renderReceitas();
+  showToast('✅ Receita adicionada!');
+}
+
+function resetReceitaModal() {
+  document.getElementById('rec-nome').value = '';
+  document.getElementById('rec-descricao').value = '';
+  document.getElementById('rec-categoria').value = 'pequeno-almoco';
+  document.getElementById('rec-pdf-input').value = '';
+  document.getElementById('rec-file-name').style.display = 'none';
+  document.getElementById('rec-upload-area').style.borderColor = 'var(--border)';
+  _receitaPdfData = null;
+}
+
+
 function conversora_calc() {
   refreshALIMENTOS();
   const nome1 = document.getElementById('conv-alim1')?.value?.trim();
@@ -5077,6 +5315,7 @@ function buildMobileNav() {
   items.push({id:'plano-alimentar', icon:'🥗', label:'Alimentar'});
   items.push({id:'alimentos', icon:'🔍', label:'Alimentos'});
   items.push({id:'conversora', icon:'🔄', label:'Conversora'});
+  items.push({id:'receitas', icon:'📄', label:'Receitas'});
   items.push('sep');
   items.push({id:'questionario', icon:'📝', label:'Check-in'});
   items.push({id:'progresso', icon:'📈', label:'Progresso'});
@@ -5113,12 +5352,14 @@ function showPanel(panelId, navEl) {
     'dashboard':'Dashboard','diario':'Diário','treino':'Plano de Treino',
     'plano-alimentar':'Plano Alimentar','alimentos':'Base de Alimentos',
     'conversora':'Conversora de Alimentos',
+    'receitas':'Receitas',
     'questionario':'Questionário','progresso':'Progresso','perfil':'Dados Pessoais'
   };
   setText('page-title', titles[panelId]||panelId);
   if (panelId==='questionario') buildQuestionnaire();
   if (panelId==='plano-alimentar') { renderPlanNotes('treino'); renderPlanNotes('descanso'); }
   if (panelId==='progresso') updateProgress();
+  if (panelId==='receitas') renderReceitas();
   if (panelId==='admin') loadAdminPanel();
   if (panelId==='admin-brand') applyBrand();
   if (panelId==='admin-exercicios') renderExerciciosTable();

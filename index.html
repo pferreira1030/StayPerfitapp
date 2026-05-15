@@ -75,6 +75,8 @@ window._fbListen = () => {
     if (!snap.exists()) return;
     try {
       const newDb = snap.data().payload ? JSON.parse(snap.data().payload) : snap.data();
+      // Garantir que receitas existe sempre
+      if (!newDb.receitas) newDb.receitas = (window._dbCache && window._dbCache.receitas) || [];
       // Só atualiza se os dados forem diferentes dos que já temos em cache
       const current = JSON.stringify(window._dbCache || {});
       const incoming = JSON.stringify(newDb);
@@ -2188,13 +2190,19 @@ async function getDB() {
     const snap = await window._fbGetDoc('db/main');
     if (snap.exists()) {
       const raw = snap.data().payload ? JSON.parse(snap.data().payload) : snap.data();
-      // Se DB vazia ou sem users, reinicializar automaticamente
+      // Se DB vazia ou sem users, reinicializar automaticamente MAS preservar receitas
       if (!raw || !raw.users || raw.users.length === 0) {
         console.warn('DB vazia — a reinicializar...');
         const freshDb = buildInitDB();
+        // Preservar receitas se existirem
+        if (raw && Array.isArray(raw.receitas) && raw.receitas.length > 0) {
+          freshDb.receitas = raw.receitas;
+        }
         await saveDB(freshDb);
         return freshDb;
       }
+      // Garantir que receitas existe sempre (migração suave)
+      if (!raw.receitas) raw.receitas = [];
       _dbCache = raw;
       window._dbCache = _dbCache;
       localStorage.setItem(DB_KEY, JSON.stringify(_dbCache));
@@ -2235,7 +2243,8 @@ function buildInitDB() {
       'client-1': makeDefaultClientData('João Silva','Hipertrofia',78.5,'ativo'),
       'client-2': makeDefaultClientData('Ana Costa','Definição',62.0,'em_falta'),
     },
-    brand: { name:'StayPerfit PRO', sub:'Acompanhamento Online', accent:'#c8f135' }
+    brand: { name:'StayPerfit PRO', sub:'Acompanhamento Online', accent:'#c8f135' },
+    receitas: []
   };
 }
 

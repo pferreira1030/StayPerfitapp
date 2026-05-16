@@ -987,6 +987,29 @@ tbody td { padding:10px 11px; font-size:13px; border-bottom:1px solid rgba(255,2
 }
 .plan-notes-edit-btn:hover { border-color:var(--warning); color:var(--warning); }
 
+/* ===== LISTA DE COMPRAS ===== */
+#lc-table { width:100%; border-collapse:collapse; }
+#lc-table thead th { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); padding:6px 8px; border-bottom:1px solid var(--border); font-weight:600; }
+#lc-table tbody tr { border-bottom:1px solid var(--border); transition:background .15s; }
+#lc-table tbody tr:last-child { border-bottom:none; }
+#lc-table tbody tr:hover { background:rgba(255,255,255,.02); }
+#lc-table tbody td { padding:9px 8px; font-size:13px; vertical-align:middle; }
+.lc-food-name { font-weight:600; }
+.lc-qty-badge { display:inline-block; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:2px 8px; font-size:12px; font-weight:600; }
+.lc-qty-weekly { display:inline-block; background:rgba(255,0,0,.1); border:1px solid rgba(255,0,0,.25); border-radius:6px; padding:2px 8px; font-size:12px; font-weight:700; color:var(--accent); }
+.lc-price { font-size:13px; font-weight:600; color:var(--success); }
+.lc-pack { font-size:11px; color:var(--muted); }
+.lc-check-btn { background:none; border:1px solid var(--border); border-radius:6px; width:26px; height:26px; cursor:pointer; font-size:13px; color:var(--muted); transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.lc-check-btn:hover { border-color:var(--success); color:var(--success); }
+.lc-checked td { opacity:.45; text-decoration:line-through; }
+.lc-total-row { display:flex; align-items:center; justify-content:space-between; margin-top:14px; padding:14px 16px; background:var(--surface2); border:1px solid var(--border); border-radius:12px; }
+.lc-total-label { font-size:13px; font-weight:600; }
+.lc-total-val { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:1px; color:var(--success); }
+@media(max-width:767px) {
+  #lc-table thead th:nth-child(2), #lc-table thead th:nth-child(3),
+  #lc-table tbody td:nth-child(2), #lc-table tbody td:nth-child(3) { display:none; }
+  #lc-table thead th:nth-child(5), #lc-table tbody td:nth-child(5) { display:none; }
+}
 </style>
 </head>
 <body>
@@ -1647,6 +1670,7 @@ tbody td { padding:10px 11px; font-size:13px; border-bottom:1px solid rgba(255,2
         <div class="tabs" style="margin-bottom:18px;" id="pa-tabs">
           <button class="tab active" id="pa-tab-treino" onclick="switchPaTab('treino')">🥩 Dia de Treino</button>
           <button class="tab" id="pa-tab-descanso" onclick="switchPaTab('descanso')">🥗 Dia de Descanso</button>
+          <button class="tab" id="pa-tab-compras" onclick="switchPaTab('compras')">🛒 Lista de Compras</button>
         </div>
 
         <!-- SUB-PANEL: Treino -->
@@ -1740,6 +1764,56 @@ tbody td { padding:10px 11px; font-size:13px; border-bottom:1px solid rgba(255,2
         </div>
         <div id="pad-meals-container"></div>
         </div><!-- /pa-sub-descanso -->
+
+        <!-- SUB-PANEL: Lista de Compras -->
+        <div id="pa-sub-compras" style="display:none;">
+          <div class="card mb-16">
+            <div class="card-header">
+              <div class="card-title">🛒 Lista de Compras Semanal</div>
+              <button class="btn btn-accent btn-sm" onclick="generateShoppingList()">🔄 Gerar Lista</button>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+              Calculado automaticamente com base nos planos de treino e descanso. Quantidades para <strong id="lc-dias-info">—</strong>.
+              Preços estimados com base em supermercados portugueses (Continente, Pingo Doce, Lidl).
+            </div>
+            <!-- Config dias -->
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+              <div style="font-size:12px;color:var(--muted);">Dias de treino/semana:</div>
+              <input type="number" id="lc-dias-treino" value="4" min="0" max="7" style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;" oninput="generateShoppingList()">
+              <div style="font-size:12px;color:var(--muted);">Dias de descanso/semana:</div>
+              <input type="number" id="lc-dias-descanso" value="3" min="0" max="7" style="width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;" oninput="generateShoppingList()">
+              <button class="btn btn-ghost btn-sm" onclick="printShoppingList()" style="margin-left:auto;">🖨 Imprimir</button>
+            </div>
+            <div id="lc-empty" style="text-align:center;padding:32px;color:var(--muted);display:none;">
+              <div style="font-size:32px;margin-bottom:10px;">🛒</div>
+              <div>Nenhum alimento no plano alimentar.<br>Adiciona alimentos nos dias de treino e descanso.</div>
+            </div>
+            <div id="lc-table-wrap" style="display:none;">
+              <table id="lc-table">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;">Alimento</th>
+                    <th style="text-align:center;">Qtd/dia treino</th>
+                    <th style="text-align:center;">Qtd/dia desc.</th>
+                    <th style="text-align:center;color:var(--accent);">Qtd semanal</th>
+                    <th style="text-align:center;">Embalagem típica</th>
+                    <th style="text-align:center;">Preço est.</th>
+                    <th style="text-align:center;width:28px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="lc-table-body"></tbody>
+              </table>
+              <div class="lc-total-row" id="lc-total-row">
+                <div class="lc-total-label">💰 Custo Semanal Estimado</div>
+                <div class="lc-total-val" id="lc-total-val">—</div>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5;">
+                ⚠️ Preços estimados com base em supermercados portugueses. Podem variar conforme a loja, marca e promoções. 
+                Preços baseados em embalagens standard do Continente / Pingo Doce / Lidl.
+              </div>
+            </div>
+          </div>
+        </div><!-- /pa-sub-compras -->
 
       </div>
 
@@ -5556,8 +5630,206 @@ function renderPlanNotes(type) {
 function switchPaTab(tab) {
   document.getElementById('pa-sub-treino').style.display = tab === 'treino' ? '' : 'none';
   document.getElementById('pa-sub-descanso').style.display = tab === 'descanso' ? '' : 'none';
+  document.getElementById('pa-sub-compras').style.display = tab === 'compras' ? '' : 'none';
   document.getElementById('pa-tab-treino').classList.toggle('active', tab === 'treino');
   document.getElementById('pa-tab-descanso').classList.toggle('active', tab === 'descanso');
+  document.getElementById('pa-tab-compras').classList.toggle('active', tab === 'compras');
+  if (tab === 'compras') generateShoppingList();
+}
+
+// ============================================================
+// LISTA DE COMPRAS — preços estimados supermercados PT
+// ============================================================
+const LC_PRECOS = {
+  // Proteínas animais
+  'frango': { preco: 5.99, emb: '1 kg', unidadeEmb: 1000 },
+  'peito de frango': { preco: 5.99, emb: '1 kg', unidadeEmb: 1000 },
+  'frango grelhado': { preco: 5.99, emb: '1 kg', unidadeEmb: 1000 },
+  'peru': { preco: 6.49, emb: '1 kg', unidadeEmb: 1000 },
+  'peito de peru': { preco: 6.49, emb: '1 kg', unidadeEmb: 1000 },
+  'carne picada': { preco: 4.99, emb: '500 g', unidadeEmb: 500 },
+  'carne de vaca': { preco: 8.99, emb: '500 g', unidadeEmb: 500 },
+  'novilho': { preco: 9.99, emb: '500 g', unidadeEmb: 500 },
+  'salmão': { preco: 9.99, emb: '400 g', unidadeEmb: 400 },
+  'atum': { preco: 1.29, emb: '120 g (lata)', unidadeEmb: 120 },
+  'atum natural': { preco: 1.29, emb: '120 g (lata)', unidadeEmb: 120 },
+  'bacalhau': { preco: 12.99, emb: '1 kg', unidadeEmb: 1000 },
+  'sardinha': { preco: 1.49, emb: '125 g (lata)', unidadeEmb: 125 },
+  'ovo': { preco: 2.49, emb: '12 un', unidadeEmb: 660 },
+  'ovo inteiro': { preco: 2.49, emb: '12 un', unidadeEmb: 660 },
+  'clara de ovo': { preco: 2.99, emb: '500 ml', unidadeEmb: 500 },
+  'claras de ovo': { preco: 2.99, emb: '500 ml', unidadeEmb: 500 },
+  'queijo cottage': { preco: 1.99, emb: '250 g', unidadeEmb: 250 },
+  'queijo fresco': { preco: 1.59, emb: '250 g', unidadeEmb: 250 },
+  'queijo': { preco: 3.49, emb: '300 g', unidadeEmb: 300 },
+  // Lácteos
+  'iogurte grego': { preco: 1.79, emb: '500 g', unidadeEmb: 500 },
+  'iogurte natural': { preco: 0.89, emb: '4x125 g', unidadeEmb: 500 },
+  'iogurte': { preco: 1.29, emb: '4x125 g', unidadeEmb: 500 },
+  'leite': { preco: 0.89, emb: '1 L', unidadeEmb: 1000 },
+  'leite meio gordo': { preco: 0.89, emb: '1 L', unidadeEmb: 1000 },
+  'skyr': { preco: 2.29, emb: '500 g', unidadeEmb: 500 },
+  // Hidratos
+  'arroz': { preco: 1.59, emb: '1 kg', unidadeEmb: 1000 },
+  'arroz integral': { preco: 1.79, emb: '1 kg', unidadeEmb: 1000 },
+  'batata doce': { preco: 1.99, emb: '1 kg', unidadeEmb: 1000 },
+  'batata': { preco: 1.29, emb: '1 kg', unidadeEmb: 1000 },
+  'massa': { preco: 0.99, emb: '500 g', unidadeEmb: 500 },
+  'esparguete': { preco: 0.99, emb: '500 g', unidadeEmb: 500 },
+  'pão integral': { preco: 1.49, emb: '500 g', unidadeEmb: 500 },
+  'pão': { preco: 1.19, emb: '500 g', unidadeEmb: 500 },
+  'aveia': { preco: 1.49, emb: '500 g', unidadeEmb: 500 },
+  'flocos de aveia': { preco: 1.49, emb: '500 g', unidadeEmb: 500 },
+  'quinoa': { preco: 3.29, emb: '500 g', unidadeEmb: 500 },
+  'quinoa cozida': { preco: 3.29, emb: '500 g', unidadeEmb: 500 },
+  'feijão': { preco: 0.79, emb: '400 g (lata)', unidadeEmb: 400 },
+  'grão de bico': { preco: 0.89, emb: '400 g (lata)', unidadeEmb: 400 },
+  'lentilhas': { preco: 0.99, emb: '400 g (lata)', unidadeEmb: 400 },
+  // Legumes
+  'brócolos': { preco: 1.49, emb: '500 g', unidadeEmb: 500 },
+  'broculos': { preco: 1.49, emb: '500 g', unidadeEmb: 500 },
+  'espinafres': { preco: 1.29, emb: '300 g', unidadeEmb: 300 },
+  'courgette': { preco: 1.19, emb: '500 g', unidadeEmb: 500 },
+  'tomate': { preco: 1.99, emb: '1 kg', unidadeEmb: 1000 },
+  'cenoura': { preco: 0.99, emb: '1 kg', unidadeEmb: 1000 },
+  'alface': { preco: 0.89, emb: '300 g', unidadeEmb: 300 },
+  'alho': { preco: 0.79, emb: '3 cabeças', unidadeEmb: 120 },
+  'cebola': { preco: 0.99, emb: '1 kg', unidadeEmb: 1000 },
+  'pepino': { preco: 0.79, emb: '1 un', unidadeEmb: 300 },
+  'pimento': { preco: 1.29, emb: '500 g', unidadeEmb: 500 },
+  'cogumelos': { preco: 1.79, emb: '250 g', unidadeEmb: 250 },
+  // Frutas
+  'banana': { preco: 1.29, emb: '1 kg', unidadeEmb: 1000 },
+  'maçã': { preco: 1.69, emb: '1 kg', unidadeEmb: 1000 },
+  'maca': { preco: 1.69, emb: '1 kg', unidadeEmb: 1000 },
+  'laranja': { preco: 1.49, emb: '1 kg', unidadeEmb: 1000 },
+  'morango': { preco: 2.49, emb: '400 g', unidadeEmb: 400 },
+  'morangos': { preco: 2.49, emb: '400 g', unidadeEmb: 400 },
+  'mirtilo': { preco: 2.99, emb: '125 g', unidadeEmb: 125 },
+  'mirtilos': { preco: 2.99, emb: '125 g', unidadeEmb: 125 },
+  'manga': { preco: 1.49, emb: '1 un', unidadeEmb: 350 },
+  // Gorduras saudáveis
+  'azeite': { preco: 5.99, emb: '750 ml', unidadeEmb: 750 },
+  'azeite extra virgem': { preco: 7.99, emb: '750 ml', unidadeEmb: 750 },
+  'amendoim': { preco: 1.79, emb: '250 g', unidadeEmb: 250 },
+  'manteiga amendoim': { preco: 3.49, emb: '350 g', unidadeEmb: 350 },
+  'abacate': { preco: 1.29, emb: '1 un', unidadeEmb: 200 },
+  'nozes': { preco: 2.99, emb: '200 g', unidadeEmb: 200 },
+  'amêndoa': { preco: 3.49, emb: '200 g', unidadeEmb: 200 },
+  'amendoas': { preco: 3.49, emb: '200 g', unidadeEmb: 200 },
+  // Suplementos comuns
+  'whey': { preco: 24.99, emb: '1 kg', unidadeEmb: 1000 },
+  'proteína whey': { preco: 24.99, emb: '1 kg', unidadeEmb: 1000 },
+  'proteina whey': { preco: 24.99, emb: '1 kg', unidadeEmb: 1000 },
+  'creatina': { preco: 14.99, emb: '500 g', unidadeEmb: 500 },
+};
+
+function getLcPreco(nome) {
+  const key = nome.toLowerCase().trim();
+  if (LC_PRECOS[key]) return LC_PRECOS[key];
+  // Partial match
+  for (const k of Object.keys(LC_PRECOS)) {
+    if (key.includes(k) || k.includes(key)) return LC_PRECOS[k];
+  }
+  // Default estimate
+  return { preco: 3.99, emb: '~500 g', unidadeEmb: 500 };
+}
+
+function generateShoppingList() {
+  if (!appData) return;
+  const diasTreino = parseInt(document.getElementById('lc-dias-treino')?.value || 4);
+  const diasDescanso = parseInt(document.getElementById('lc-dias-descanso')?.value || 3);
+  const infoEl = document.getElementById('lc-dias-info');
+  if (infoEl) infoEl.textContent = `${diasTreino} dias de treino + ${diasDescanso} dias de descanso`;
+
+  // Aggregate foods
+  const mapa = {};
+  function addItems(meals, mult) {
+    if (!meals) return;
+    Object.values(meals).forEach(items => {
+      (items || []).forEach(it => {
+        const k = (it.nome || '').trim().toLowerCase();
+        if (!k) return;
+        if (!mapa[k]) mapa[k] = { nome: it.nome, qtdTreino: 0, qtdDescanso: 0 };
+        if (mult === 'treino') mapa[k].qtdTreino += (it.quantidade || 0);
+        else mapa[k].qtdDescanso += (it.quantidade || 0);
+      });
+    });
+  }
+  addItems(appData.planoTreino?.meals, 'treino');
+  addItems(appData.planoDescanso?.meals, 'descanso');
+
+  const keys = Object.keys(mapa);
+  const emptyEl = document.getElementById('lc-empty');
+  const tableWrap = document.getElementById('lc-table-wrap');
+  const tbody = document.getElementById('lc-table-body');
+  if (!keys.length) {
+    emptyEl.style.display = '';
+    tableWrap.style.display = 'none';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  tableWrap.style.display = '';
+
+  let totalCusto = 0;
+  let rows = '';
+  keys.forEach(k => {
+    const item = mapa[k];
+    const qtdSemanal = (item.qtdTreino * diasTreino) + (item.qtdDescanso * diasDescanso);
+    const info = getLcPreco(item.nome);
+    const numEmb = Math.ceil(qtdSemanal / info.unidadeEmb);
+    const custo = numEmb * info.preco;
+    totalCusto += custo;
+    const qtdTreinoDisplay = item.qtdTreino > 0 ? `<span class="lc-qty-badge">${item.qtdTreino}g</span>` : '<span style="color:var(--muted);font-size:12px;">—</span>';
+    const qtdDescDisplay = item.qtdDescanso > 0 ? `<span class="lc-qty-badge">${item.qtdDescanso}g</span>` : '<span style="color:var(--muted);font-size:12px;">—</span>';
+    rows += `<tr>
+      <td class="lc-food-name">${item.nome}</td>
+      <td style="text-align:center;">${qtdTreinoDisplay}</td>
+      <td style="text-align:center;">${qtdDescDisplay}</td>
+      <td style="text-align:center;"><span class="lc-qty-weekly">${qtdSemanal}g</span></td>
+      <td style="text-align:center;"><span class="lc-pack">${numEmb}x ${info.emb}</span></td>
+      <td style="text-align:center;"><span class="lc-price">~${custo.toFixed(2)}€</span></td>
+      <td style="text-align:center;"><button class="lc-check-btn" onclick="lcToggleRow(this)" title="Marcar como comprado">✓</button></td>
+    </tr>`;
+  });
+  tbody.innerHTML = rows;
+  document.getElementById('lc-total-val').textContent = '~' + totalCusto.toFixed(2) + '€';
+}
+
+function lcToggleRow(btn) {
+  const tr = btn.closest('tr');
+  tr.classList.toggle('lc-checked');
+  btn.textContent = tr.classList.contains('lc-checked') ? '↩' : '✓';
+}
+
+function printShoppingList() {
+  const tbody = document.getElementById('lc-table-body');
+  if (!tbody || !tbody.innerHTML.trim()) { showToast('⚠️ Gera a lista primeiro!', true); return; }
+  const total = document.getElementById('lc-total-val')?.textContent || '';
+  const diasInfo = document.getElementById('lc-dias-info')?.textContent || '';
+  const rows = Array.from(tbody.querySelectorAll('tr')).map(tr => {
+    const tds = tr.querySelectorAll('td');
+    return `<tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:600;">${tds[0]?.textContent||''}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center;">${tds[3]?.textContent||''}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center;">${tds[4]?.textContent||''}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center;color:#16a34a;font-weight:600;">${tds[5]?.textContent||''}</td>
+    </tr>`;
+  }).join('');
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Lista de Compras — StayPerfit</title>
+  <style>body{font-family:sans-serif;padding:30px;max-width:700px;margin:0 auto;color:#111}
+  h1{font-size:22px;margin-bottom:4px}p{font-size:13px;color:#666;margin-bottom:18px}
+  table{width:100%;border-collapse:collapse}thead th{background:#f3f4f6;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px}
+  tfoot td{padding:12px 10px;font-size:15px;font-weight:700;border-top:2px solid #111}</style></head>
+  <body><h1>🛒 Lista de Compras Semanal</h1><p>${diasInfo} · Gerado por StayPerfit PRO</p>
+  <table><thead><tr><th>Alimento</th><th>Qtd Semanal</th><th>Embalagem</th><th>Custo Est.</th></tr></thead>
+  <tbody>${rows}</tbody>
+  <tfoot><tr><td colspan="3">💰 Custo Total Estimado</td><td style="color:#16a34a">${total}</td></tr></tfoot>
+  </table><p style="margin-top:20px;font-size:11px;color:#999;">Preços estimados com base em supermercados portugueses (Continente, Pingo Doce, Lidl). Podem variar.</p>
+  </body></html>`);
+  w.document.close();
+  w.print();
 }
 
 function switchCdPaTab(tab) {

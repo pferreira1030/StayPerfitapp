@@ -6003,13 +6003,16 @@ function generateShoppingList() {
     const numEmb = Math.ceil(qtdSemanal / info.unidadeEmb);
     const custo = numEmb * info.preco;
     totalCusto += custo;
-    const qtdTreinoDisplay = item.qtdTreino > 0 ? `<span class="lc-qty-badge">${item.qtdTreino}g</span>` : '<span style="color:var(--muted);font-size:12px;">—</span>';
-    const qtdDescDisplay = item.qtdDescanso > 0 ? `<span class="lc-qty-badge">${item.qtdDescanso}g</span>` : '<span style="color:var(--muted);font-size:12px;">—</span>';
+    // Determinar unidade correta a partir da base de alimentos
+    const baseAlim = ALIMENTOS.find(a => a.n.toLowerCase() === k);
+    const unidadeLabel = baseAlim ? (baseAlim.u === 'ml' ? 'ml' : baseAlim.u === 'unid' || baseAlim.u === 'un' ? 'un' : 'g') : 'g';
+    const qtdTreinoDisplay = item.qtdTreino > 0 ? `<span class="lc-qty-badge">${item.qtdTreino}${unidadeLabel}</span>` : '<span style="color:var(--muted);font-size:12px;">—</span>';
+    const qtdDescDisplay = item.qtdDescanso > 0 ? `<span class="lc-qty-badge">${item.qtdDescanso}${unidadeLabel}</span>` : '<span style="color:var(--muted);font-size:12px;">—</span>';
     rows += `<tr>
       <td class="lc-food-name">${item.nome}</td>
       <td style="text-align:center;">${qtdTreinoDisplay}</td>
       <td style="text-align:center;">${qtdDescDisplay}</td>
-      <td style="text-align:center;"><span class="lc-qty-weekly">${qtdSemanal}g</span></td>
+      <td style="text-align:center;"><span class="lc-qty-weekly">${qtdSemanal}${unidadeLabel}</span></td>
       <td style="text-align:center;"><span class="lc-pack">${numEmb}x ${info.emb}</span></td>
       <td style="text-align:center;"><span class="lc-price">~${custo.toFixed(2)}€</span></td>
       <td style="text-align:center;"><button class="lc-check-btn" onclick="lcToggleRow(this)" title="Marcar como comprado">✓</button></td>

@@ -2007,14 +2007,14 @@ tbody td { padding:10px 11px; font-size:13px; border-bottom:1px solid rgba(255,2
       </div>
 
       <!-- ===== RECEITAS ===== -->
-      <div class="panel" id="panel-receitas">
+      <div class="panel" id="panel-receitas-2">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <div class="section-title" style="margin-bottom:0;">📄 Receitas</div>
           <button class="btn btn-accent btn-sm admin-only" onclick="openModal('modal-add-receita')" style="display:none;">+ Adicionar Receita</button>
         </div>
 
         <!-- Filtro por categoria -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="receitas-filtros">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="receitas-filtros-2">
           <button class="btn btn-ghost btn-sm" onclick="filtrarReceitas('todas',this)" style="border:1px solid var(--accent);color:var(--accent);">Todas</button>
           <button class="btn btn-ghost btn-sm" onclick="filtrarReceitas('pequeno-almoco',this)">☀️ Pequeno-Almoço</button>
           <button class="btn btn-ghost btn-sm" onclick="filtrarReceitas('almoco',this)">🍽️ Almoço</button>
@@ -2025,8 +2025,8 @@ tbody td { padding:10px 11px; font-size:13px; border-bottom:1px solid rgba(255,2
         </div>
 
         <!-- Grid de receitas -->
-        <div id="receitas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;"></div>
-        <div id="receitas-empty" style="display:none;text-align:center;padding:40px;color:var(--muted);">
+        <div id="receitas-grid-2" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;"></div>
+        <div id="receitas-empty-2" style="display:none;text-align:center;padding:40px;color:var(--muted);">
           <div style="font-size:48px;margin-bottom:12px;">📄</div>
           <div style="font-size:15px;">Nenhuma receita disponível.</div>
           <div style="font-size:13px;margin-top:6px;" class="admin-only">Clica em <strong>+ Adicionar Receita</strong> para começar.</div>
@@ -2792,6 +2792,9 @@ function reloadAfterSync() {
   refreshALIMENTOS();
   buildAlimentosDatalist();
   renderAlimentosTable();
+  // Atualizar receitas se o painel estiver visível
+  const receitasPanel = document.getElementById('panel-receitas');
+  if (receitasPanel && receitasPanel.classList.contains('active')) renderReceitas();
 }
 
 function loadApp() {
@@ -5067,18 +5070,24 @@ function renderReceitas(filtro) {
   const receitas = (db.receitas || []).filter(r =>
     _receitaFiltroAtivo === 'todas' || r.categoria === _receitaFiltroAtivo
   );
-  const grid = document.getElementById('receitas-grid');
-  const empty = document.getElementById('receitas-empty');
+  // Suporta dois painéis com IDs diferentes (admin e cliente)
+  const grid = document.getElementById('receitas-grid') || document.getElementById('receitas-grid-2');
+  const grid2 = document.getElementById('receitas-grid-2');
+  const empty = document.getElementById('receitas-empty') || document.getElementById('receitas-empty-2');
+  const empty2 = document.getElementById('receitas-empty-2');
   if (!grid) return;
 
   const isAdmin = currentUser && currentUser.role === 'admin';
 
   if (!receitas.length) {
     grid.innerHTML = '';
+    if (grid2 && grid2 !== grid) grid2.innerHTML = '';
     if (empty) empty.style.display = 'block';
+    if (empty2 && empty2 !== empty) empty2.style.display = 'block';
     return;
   }
   if (empty) empty.style.display = 'none';
+  if (empty2 && empty2 !== empty) empty2.style.display = 'none';
 
   const catLabels = {
     'pequeno-almoco': '☀️ Pequeno-Almoço',
@@ -5089,7 +5098,7 @@ function renderReceitas(filtro) {
     'outro': '📁 Outro'
   };
 
-  grid.innerHTML = receitas.map(r => {
+  const html = receitas.map(r => {
     const imgHtml = r.imagem ? `<div style="width:100%;height:160px;overflow:hidden;border-radius:10px 10px 0 0;flex-shrink:0;"><img src="${r.imagem}" alt="${r.nome}" style="width:100%;height:100%;object-fit:cover;"></div>` : `<div style="width:100%;height:100px;border-radius:10px 10px 0 0;background:linear-gradient(135deg,var(--surface2),var(--surface3));display:flex;align-items:center;justify-content:center;font-size:40px;flex-shrink:0;">🍽️</div>`;
     const macrosHtml = (r.kcal||r.prot||r.hidr||r.gord) ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
       ${r.kcal?`<span style="font-size:10px;background:rgba(255,165,2,.12);color:var(--warning);padding:2px 7px;border-radius:20px;font-weight:600;">${r.kcal} kcal</span>`:''}
@@ -5122,6 +5131,8 @@ function renderReceitas(filtro) {
       </div>
     </div>`;
   }).join('');
+  grid.innerHTML = html;
+  if (grid2 && grid2 !== grid) grid2.innerHTML = html;
 }
 
 function filtrarReceitas(cat, btn) {

@@ -1019,93 +1019,151 @@ tbody td { padding:10px 11px; font-size:13px; border-bottom:1px solid rgba(255,2
 </style>
 <style id="sp-skin">
 /* ==========================================================================
-   STAYPERFIT — refinamento minimalista
-   Paleta do logo: carmesim + branco sobre preto. Sem efeitos, só limpeza:
-   superfícies planas, linhas finas, espaçamento consistente.
-   A cor de marca continua a vir de --accent (Admin → Personalizar).
+   STAYPERFIT — sistema retangular minimalista
+   Cantos retos, linhas de 1px, sem sombras, sem emojis na navegação,
+   hierarquia só por tipografia (DM Mono nas etiquetas, Bebas nos números).
+   Cor de marca: --accent (Admin → Personalizar). Padrão = carmesim do logo.
    ========================================================================== */
 :root{
-  --bg:#0b0b0d;
-  --surface:#121215;
-  --surface2:#18181c;
-  --surface3:#202026;
-  --border:#26262c;
-  --text:#f3f3f5;
-  --muted:#8b8b95;
-  --accent:#e8213f;            /* carmesim do logo (substituído pela cor da marca, se definida) */
-  --accent2:#9a9aa6;
-  --card-radius:14px;
+  --bg:#09090a;
+  --surface:#09090a;           /* mesma cor do fundo: estrutura só por linhas */
+  --surface2:#111113;
+  --surface3:#19191c;
+  --border:#232326;
+  --text:#f4f4f5;
+  --muted:#85858c;
+  --accent:#e8213f;
+  --accent2:#85858c;
+  --card-radius:0px;
+  --r:2px;
+  --mono:'DM Mono',ui-monospace,monospace;
 }
 body{background:var(--bg);-webkit-font-smoothing:antialiased}
 
-/* Tipografia: Bebas Neue (já usada) só em títulos; resto DM Sans */
-.topbar-title,.section-title,.modal-title{letter-spacing:.06em}
-.stat-label,.card-title,.nav-label,thead th{letter-spacing:.1em;font-weight:600}
-.nav-label{color:#5d5d68}
+/* Cantos retos em toda a app (exceto círculos e interruptores) */
+.card,.stat-card,.client-card,.exercise-card,.rotina-card,.client-detail-header,.modal,.login-box,
+.btn,.login-btn,input,select,textarea,.search-bar,.tabs,.tab,.client-detail-tabs,.client-detail-tab,
+.macro-day-tabs,.macro-day-tab,.day-pill,.nav-item,.sidebar-user,.sidebar-logout,.status-badge,
+.role-badge,.demo-role,.semana-badge,.food-tag,.tip-badge,.progress-bar,.progress-fill,.modal-close,
+.mobile-nav-item,.perm-item,.q-item,.suppl-item,.set-row,.active-set-row,.done-btn,.workout-finish-btn,
+.rotina-start-btn,.client-avatar,.client-detail-avatar,.logo-pro,.demo-hint,.login-error,.plan-notes-card,
+.progress-chart-box,.stat-card-admin-edit{border-radius:var(--r)!important}
+[style*="border-radius"]:not([style*="50%"]):not([style*="border-radius:100"]):not([style*="border-radius: 100"]){border-radius:var(--r)!important}
+.toggle-slider,.toggle-slider::before{border-radius:0!important}
+
+/* Tipografia */
+.topbar-title{font-size:18px;letter-spacing:.14em;text-transform:uppercase}
+.section-title{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+  padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.modal-title{letter-spacing:.14em;text-transform:uppercase;font-size:16px}
+.stat-label,.card-title,.nav-label,thead th,label,.form-group label,.login-sub,.logo-sub,.topbar-date,.demo-hint-title{
+  font-family:var(--mono)!important;font-size:10px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.stat-val{font-size:34px;letter-spacing:.01em}
+
+/* Cartões: sem fundo, só linha */
+.card,.stat-card,.client-card,.exercise-card,.rotina-card,.client-detail-header,.progress-chart-box,.plan-notes-card{
+  background:transparent;border:1px solid var(--border);box-shadow:none;transition:border-color .15s}
+.card:hover,.stat-card:hover,.client-card:hover,.rotina-card:hover{border-color:#44444a;transform:none;box-shadow:none}
+.stat-card .accent-line{height:2px;width:100%;left:0;right:0;background:var(--accent)}
+.stat-icon,.stat-card .stat-icon{display:none}
+.card-header{border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:16px}
+.client-avatar,.client-detail-avatar{background:var(--accent);color:var(--accent-text,#fff)}
 
 /* Login */
 #login-screen::before,#login-screen::after{display:none}
-.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:none;padding:44px 40px}
-.login-btn{border-radius:10px;color:var(--accent-text,#fff)}
-.login-btn:hover{transform:none;background:var(--accent-hover,var(--accent));filter:brightness(1.08)}
-.form-group input,input,select,textarea{background:var(--surface2);border-radius:10px}
-input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.login-box{background:transparent;border:1px solid var(--border);box-shadow:none;padding:44px 40px;max-width:400px}
+.login-title{font-size:13px;font-family:var(--mono);letter-spacing:.2em;text-transform:uppercase;font-weight:400;color:var(--muted)}
+.login-btn{background:var(--accent);color:var(--accent-text,#fff);text-transform:uppercase;letter-spacing:.18em;font-size:12px}
+.login-btn:hover{transform:none;background:var(--accent-hover,var(--accent))}
 
-/* Menu lateral */
-.sidebar{background:var(--surface);border-right:1px solid var(--border)}
-.sidebar-logo{padding:22px 22px 18px}
-.logo-pro{background:var(--accent);color:var(--accent-text,#fff)}
-.nav-item{border-radius:10px;position:relative}
-.nav-item:hover{background:var(--surface2)}
+/* Campos */
+input,select,textarea,.form-group input,.search-bar{background:var(--surface2);border:1px solid var(--border)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:none}
+.search-bar:focus-within{border-color:var(--accent)}
+
+/* Botões */
+.btn{text-transform:uppercase;letter-spacing:.1em;font-size:11px;font-weight:600;padding:10px 16px;transition:background .15s,border-color .15s,color .15s}
+.btn-accent{background:var(--accent);color:var(--accent-text,#fff)}
+.btn-accent:hover{background:var(--accent-hover,var(--accent));transform:none}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--text);color:var(--text)}
+.btn-sm{padding:6px 11px}
+
+/* Menu lateral: lista de texto, sem emojis */
+.sidebar{background:var(--bg);border-right:1px solid var(--border);width:224px}
+.main{margin-left:224px}
+.sidebar-logo{padding:22px 22px 20px;border-bottom:1px solid var(--border)}
+.logo-pro{background:transparent;color:var(--accent);border:1px solid var(--accent);font-family:var(--mono);letter-spacing:.14em}
+.nav{padding:14px 0}
+.nav-section{margin-bottom:18px}
+.nav-label{padding:0 22px;margin-bottom:6px;color:#55555c}
+.nav-item{position:relative;padding:9px 22px;font-size:13px;font-weight:400;color:var(--muted);background:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
 .nav-item.active{background:var(--surface2);color:var(--text)}
-.nav-item.active::before{content:'';position:absolute;left:-12px;top:22%;bottom:22%;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
-.nav-item.active .icon{filter:none}
-.role-badge.admin,.demo-role.admin{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
-.role-badge.client,.demo-role.client{background:var(--surface3);color:var(--muted)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent)}
+.nav-item .icon{display:none}
+.sidebar-user{margin:0;border:0;border-top:1px solid var(--border);background:transparent;padding:16px 22px}
+.sidebar-logout{border:1px solid var(--border);text-transform:uppercase;letter-spacing:.12em;font-size:10px;font-family:var(--mono)}
+.sidebar-logout:hover{border-color:var(--accent);color:var(--accent)}
 
 /* Topbar */
 .topbar{background:var(--bg);border-bottom:1px solid var(--border)}
+.content{padding:28px}
 
-/* Cartões: planos, borda fina */
-.card,.stat-card,.client-card,.exercise-card,.rotina-card,.client-detail-header{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--card-radius);box-shadow:none}
-.stat-card:hover,.client-card:hover,.rotina-card:hover{border-color:#3a3a43;transform:none;box-shadow:none}
-.stat-card .accent-line{height:2px;width:28px;right:auto;left:18px;border-radius:0 0 2px 2px}
-.stat-val{letter-spacing:.02em}
-.client-avatar,.client-detail-avatar{background:var(--accent);color:var(--accent-text,#fff)}
-
-/* Botões */
-.btn{border-radius:10px}
-.btn-accent{background:var(--accent);color:var(--accent-text,#fff)}
-.btn-accent:hover{background:var(--accent-hover,var(--accent));transform:none;filter:brightness(1.08)}
-.btn-ghost{background:var(--surface2)}
-.btn-ghost:hover{border-color:var(--accent);color:var(--text)}
-
-/* Tabs / pills */
-.tabs,.client-detail-tabs,.macro-day-tabs{background:var(--surface2);border-radius:12px}
-.tab.active,.client-detail-tab.active{background:var(--surface3);color:var(--text);box-shadow:none}
-.day-pill.treino{background:color-mix(in srgb,var(--accent) 12%,transparent);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
-.day-pill.descanso{background:var(--surface2);border-color:var(--border)}
+/* Tabs / dias */
+.tabs,.client-detail-tabs,.macro-day-tabs{background:transparent;border:1px solid var(--border);padding:0;gap:0}
+.tab,.client-detail-tab,.macro-day-tab{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-right:1px solid var(--border)}
+.tab:last-child,.client-detail-tab:last-child,.macro-day-tab:last-child{border-right:0}
+.tab.active,.client-detail-tab.active,.macro-day-tab.active{background:var(--accent);color:var(--accent-text,#fff);box-shadow:none}
+.day-pill{background:transparent}
+.day-pill.treino{background:transparent;border-color:var(--accent)}
+.day-pill.descanso{background:transparent;border-color:var(--border)}
 .day-pill.descanso .day-type{color:var(--muted)}
-.day-pill:hover{border-color:var(--accent)}
 
-/* Progresso */
-.progress-bar{height:4px;background:var(--surface3)}
-.fill-purple{background:var(--muted)}
+/* Progresso e anéis */
+.progress-bar{height:3px;background:var(--surface3)}
+.fill-purple{background:var(--text)}
+.fill-orange{background:var(--muted)}
+.ring-fill[stroke="#7b5ea7"]{stroke:#f4f4f5!important}
+.ring-fill[stroke="#ffa502"]{stroke:#6a6a72!important}
+.ring-fill{stroke-linecap:butt;stroke-width:5}
+.ring-bg{stroke-width:5}
+.macro-ring .ring-label{color:var(--text)!important}
+
+/* Tabelas */
+table{border-collapse:collapse}
+thead th{border-bottom:1px solid var(--text);padding:10px 11px}
+tbody td{border-bottom:1px solid var(--border)}
+tbody tr:hover{background:var(--surface2)}
 
 /* Modais */
-.modal-overlay{background:rgba(0,0,0,.72);backdrop-filter:none}
-.modal{background:var(--surface);border-radius:18px}
+.modal-overlay{background:rgba(0,0,0,.82);backdrop-filter:none}
+.modal{background:var(--bg);border:1px solid #3a3a40;box-shadow:none;transform:none}
+.modal-close:hover{background:var(--surface2);transform:none}
 
-/* Toggle / nav móvel / extras com o verde antigo */
-.toggle input:checked + .toggle-slider{background:color-mix(in srgb,var(--accent) 40%,transparent)}
-.mobile-nav-item.active{background:var(--surface2);color:var(--accent)}
-.stat-card-admin-edit{background:color-mix(in srgb,var(--accent) 14%,transparent);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
-.search-bar{background:var(--surface2);border-radius:10px}
-tbody tr:hover{background:var(--surface2)}
-.ring-fill[stroke="#7b5ea7"]{stroke:#f3f3f5!important}
-.ring-fill[stroke="#ffa502"]{stroke:#6e6e79!important}
-.macro-ring .ring-label{color:var(--text)!important}
+/* Distintivos */
+.role-badge.admin,.demo-role.admin,.status-badge.success{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.role-badge.client,.demo-role.client{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.status-badge,.role-badge,.semana-badge,.tip-badge,.food-tag{font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;font-size:9.5px}
+
+/* Interruptor retangular */
+.toggle{width:34px;height:18px}
+.toggle-slider{background:var(--surface3);border:1px solid var(--border)}
+.toggle-slider::before{width:12px;height:12px;left:2px;bottom:2px;background:var(--muted)}
+.toggle input:checked + .toggle-slider{background:transparent;border-color:var(--accent)}
+.toggle input:checked + .toggle-slider::before{transform:translateX(16px);background:var(--accent)}
+
+/* Navegação móvel: mantém ícones (precisa deles), mas reta */
+.mobile-nav{background:var(--bg)!important;border-top:1px solid var(--border)!important;backdrop-filter:none}
+.mobile-nav-item.active{background:transparent;color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
+
+/* Tablet: barra estreita precisa dos ícones */
+@media(min-width:768px) and (max-width:900px){
+  .sidebar{width:64px}.main{margin-left:64px}
+  .nav-item{padding:10px 0}.nav-item .icon{display:block;font-size:19px;filter:grayscale(1)}
+  .nav-item.active .icon{filter:none}
+}
+@media(max-width:767px){.sidebar{width:248px}.main{margin-left:0}.content{padding:16px}}
 </style>
 
 </head>
